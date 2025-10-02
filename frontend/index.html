@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Traffic Violation Detector</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+  <script defer src="./firebase.js"></script>
+  <script defer src="./app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <meta name="color-scheme" content="light dark">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Traffic Violation Detector</div>
+    <div class="auth">
+      <a class="btn" href="./admin.html">Admin</a>
+      <a class="btn" href="./driver.html">Driver</a>
+      <button id="btnSignIn" class="btn primary">Sign in with Google</button>
+      <div id="userInfo" class="user-info hidden">
+        <img id="userAvatar" alt="avatar" />
+        <span id="userName"></span>
+        <button id="btnSignOut" class="btn">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>Input</h2>
+      <div class="inputs">
+        <label class="file-input">
+          <input type="file" id="imageInput" accept="image/*" />
+          <span class="btn">Upload Image</span>
+        </label>
+        <button id="btnCamera" class="btn">Use Camera</button>
+        <button id="btnProcess" class="btn primary" disabled>Process</button>
+      </div>
+
+      <div class="media">
+        <video id="video" autoplay playsinline class="hidden"></video>
+        <canvas id="canvas"></canvas>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Detections</h2>
+      <div class="grid">
+        <div>
+          <div class="label">Detected Plate</div>
+          <div id="plateText" class="value">-</div>
+        </div>
+        <div>
+          <div class="label">Rider Count</div>
+          <div id="riderCount" class="value">-</div>
+        </div>
+        <div>
+          <div class="label">Helmet Detected</div>
+          <div id="helmetDetected" class="value">-</div>
+        </div>
+        <div>
+          <div class="label">Violations</div>
+          <div id="violations" class="value">-</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="btnSave" class="btn" disabled>Save Result</button>
+        <button id="btnFetch" class="btn">Fetch My Violations</button>
+      </div>
+      <div id="status" class="status"></div>
+      <div id="violationsList" class="list"></div>
+    </section>
+  </main>
+
+  <footer class="footer">Built with HTML/CSS/JS, Firebase, MongoDB, Tesseract.js, and COCO-SSD</footer>
+</body>
+</html>

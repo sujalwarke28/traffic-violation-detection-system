@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver · Traffic Violation Detector</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script defer src="./firebase.js"></script>
+  <script defer src="./driver.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <meta name="color-scheme" content="light dark">
+</head>
+<body class="driver-body">
+  <!-- Decorative background reused from landing -->
+  <div class="bg-blob blob1"></div>
+  <div class="bg-blob blob2"></div>
+  <div class="bg-grid"></div>
+
+  <header class="topbar glass">
+    <div class="brand" style="display:flex;align-items:center;gap:10px">
+      <span class="logo-pill">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M5 11l1-3 3-2h6l3 2 1 3v7H5v-7z" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="8" cy="19" r="2" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="16" cy="19" r="2" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </span>
+      Driver · Traffic Violation Detector
+    </div>
+    <div class="auth">
+      <button id="btnSignIn" class="btn primary with-icon"><span class="btn-ico">🔐</span><span>Sign in with Google</span></button>
+      <div id="userInfo" class="user-info hidden">
+        <img id="userAvatar" alt="avatar" />
+        <span id="userName"></span>
+        <button id="btnSignOut" class="btn ghost">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container driver-container">
+    <section class="panel glass">
+      <div class="tabs">
+        <button id="btnTabHome" class="tab-btn active">
+          <span class="btn-ico">🏠</span>
+          <span>Home</span>
+        </button>
+        <button id="btnTabProfile" class="tab-btn">
+          <span class="btn-ico">👤</span>
+          <span>Profile</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Greeting banner -->
+    <section class="panel glass">
+      <h2 id="greeting" class="panel-title">Welcome</h2>
+    </section>
+
+    <section id="homePanel" class="panel glass">
+      <div class="panel-head">
+        <h2 class="panel-title">My Violations</h2>
+        <div class="actions">
+          <button id="btnRefreshHome" class="btn with-icon"><span class="btn-ico">↻</span><span>Refresh</span></button>
+        </div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="headline">Pending <span class="badge">Unpaid</span></div>
+          <div id="pendingList" class="list"></div>
+        </div>
+        <div>
+          <div class="headline">Paid <span class="badge success">Completed</span></div>
+          <div id="paidList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="profilePanel" class="panel glass hidden">
+      <h2 class="panel-title">Profile</h2>
+      <div id="profileCard" class="card hidden"></div>
+      <div class="actions">
+        <button id="btnEditProfile" class="btn hidden">Edit</button>
+      </div>
+      <h3 class="subhead">Register Vehicle</h3>
+      <div class="two-col" id="registerBlock">
+        <div class="stack">
+          <div class="grid grid-2">
+            <div>
+              <div class="label">Your Name</div>
+              <input id="inpName" class="btn input" placeholder="Your Name" />
+            </div>
+            <div>
+              <div class="label">Email</div>
+              <input id="inpEmail" class="btn input" placeholder="Your Email" />
+            </div>
+            <div>
+              <div class="label">Vehicle Type</div>
+              <select id="inpVehicleType" class="btn input">
+                <option value="motorcycle">Motorcycle</option>
+                <option value="scooter">Scooter</option>
+                <option value="car">Car</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <div class="label">Model</div>
+              <input id="inpVehicleModel" class="btn input" placeholder="Vehicle Model" />
+            </div>
+            <div>
+              <div class="label">Color</div>
+              <input id="inpVehicleColor" class="btn input" placeholder="Vehicle Color" />
+            </div>
+            <div>
+              <div class="label">Plate Number</div>
+              <input id="inpPlateNumber" class="btn input uppercase" placeholder="e.g. KL47B5099" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="btnRegister" class="btn primary" disabled>Register</button>
+            <button id="btnSaveProfile" class="btn primary hidden">Save changes</button>
+            <button id="btnCancelEdit" class="btn ghost hidden">Cancel</button>
+          </div>
+          <div id="driverStatus" class="status"></div>
+        </div>
+
+        <div class="stack">
+          <div class="label">Upload Numberplate Image</div>
+          <div id="plateDrop" class="tile" tabindex="0">
+            <div class="hint">Drag and drop or click to upload<br/>(preview below)</div>
+          </div>
+          <img id="platePreview" alt="preview" class="preview hidden" />
+          <input type="file" id="plateImage" accept="image/*" class="hidden" />
+          <div class="actions">
+            <button id="btnReadPlate" class="btn with-icon"><span class="btn-ico">🔎</span><span>Read Plate Number</span></button>
+            <button id="btnClearPlate" class="btn ghost">Clear</button>
+          </div>
+          <div>
+            <span class="label">Detected:</span>
+            <span id="detectedPlate" class="value">-</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">Register your vehicle by plate number to receive assigned violations.</footer>
+</body>
+</html>

@@ -1,0 +1,200 @@
+# Traffic Violation Detection System
+
+A full-stack web application for detecting traffic violations using in-browser ML/OCR, Firebase Authentication (Google Sign-In), a Node/Express backend, and MongoDB Atlas for persistence.
+
+> Important: This repository is intended to be public-safe. Follow the checklist below to ensure no secrets are exposed.
+
+## Features
+
+- **Detection & OCR (client-side)**: COCO‑SSD (TensorFlow.js) for motorcycle/person detection, Tesseract.js for license plate OCR.
+- **Admin Console**: Upload scene + optional plate image, run detection/OCR, save violations to DB.
+- **Driver Portal**: Register vehicle, view assigned violations, pay fines via Razorpay Checkout.
+- **Auth**: Firebase Google Sign‑In on frontend, Firebase Admin token verification on backend.
+- **Persistence**: MongoDB Atlas with `drivers` and `violations` collections.
+
+## Tech Stack
+
+- **Frontend**: HTML, CSS, JavaScript (vanilla), TensorFlow.js, Tesseract.js.
+- **Backend**: Node.js, Express.js, Mongoose.
+- **Database**: MongoDB Atlas.
+- **Auth**: Firebase (Google Sign‑In, Admin SDK for verification).
+- **Payments**: Razorpay (optional/demo).
+
+## Repository Structure
+
+```
+frontend/           # Static site: landing, admin, driver
+  index.html        # Detector demo
+  admin.html        # Admin console
+  driver.html       # Driver portal
+  styles.css        # Shared styles (glass UI)
+  app.js            # Detector logic
+  admin.js          # Admin flows: upload, detect, OCR, save
+  driver.js         # Driver flows: register, profile, violations, pay
+  firebase.js       # Firebase web config & helper methods
+
+backend/            # Express API (type: module)
+  server.js         # App setup, routes, Mongo connect, auth middleware
+  src/
+    models/         # Mongoose models (Driver, Violation)
+    routes/         # Express routers (violations, drivers, payments)
+    utils/auth.js   # Firebase Admin token verification
+
+docs/               # Architecture and planning
+```
+
+## Public Repo Safety Checklist (Do This Before/When Making Public)
+
+- **Secrets never in repo**
+  - Do NOT commit `.env` files or any keys.
+  - Do NOT commit Firebase service account JSON.
+  - Do NOT commit your MongoDB connection string.
+- **Rotate anything that was ever committed**
+  - If secrets ever appeared in git history, rotate them (MongoDB user/password, Firebase service account, Razorpay keys).
+- **Use environment variables only**
+  - Backend reads all secrets from environment variables on the host.
+- **Client Firebase config is OK**
+  - Firebase web config in `frontend/firebase.js` is public by design; keep rules secure on the server side.
+
+### .gitignore (recommended entries)
+
+Ensure your repo ignores local secrets and artifacts:
+
+```
+# Environment files
+.env
+.env.*
+
+# Firebase Admin credentials (never commit)
+backend/serviceAccountKey.json
+
+# Node modules
+**/node_modules/
+
+# OS and editor files
+.DS_Store
+*.log
+```
+
+### .env.example (safe template to include in repo)
+
+Create `backend/.env.example` (no real values) to document required vars:
+
+```
+# Backend environment example (do not put real secrets here)
+PORT=4000
+MONGODB_URI=YOUR_ATLAS_URI
+MONGODB_DB=trafficdb
+RAZORPAY_KEY_ID=YOUR_RAZORPAY_TEST_KEY_ID
+RAZORPAY_KEY_SECRET=YOUR_RAZORPAY_TEST_KEY_SECRET
+
+# Paste full JSON of Firebase service account here in cloud hosts only
+FIREBASE_SERVICE_ACCOUNT_JSON={}
+```
+
+## Environment Variables (Backend)
+
+Set these on your local machine and on your cloud host.
+
+- `PORT` (optional, default 4000)
+- `MONGODB_URI` (required) – MongoDB Atlas connection string
+- `MONGODB_DB` (optional, default `trafficdb`)
+- `RAZORPAY_KEY_ID` (optional for payment demo)
+- `RAZORPAY_KEY_SECRET` (optional for payment demo)
+- `FIREBASE_SERVICE_ACCOUNT_JSON` (recommended in cloud) – the full JSON content of your Firebase service account
+
+Notes:
+- Locally, the backend can read `backend/serviceAccountKey.json`. In production, prefer `FIREBASE_SERVICE_ACCOUNT_JSON`.
+- Never commit secrets.
+
+If any secrets were previously committed, treat them as compromised and rotate immediately.
+
+## Local Development
+
+1) Backend
+- Terminal A:
+  ```bash
+  cd backend
+  npm install
+  # create .env or export env vars in your shell
+  npm start
+  # Server: http://localhost:4000  (Health: /health)
+  ```
+
+2) Frontend
+- Terminal B:
+  ```bash
+  cd frontend
+  # serve static files at http://localhost:8080
+  python -m http.server 8080
+  ```
+- Open `http://localhost:8080/landing.html`.
+
+3) Sign-In & Flows
+- Sign in with Google on Landing.
+- Admin → `admin.html`: Upload, detect, OCR, and Save → creates a violation in MongoDB.
+- Driver → `driver.html`: Register vehicle and view pending/paid violations; pay via Razorpay test.
+
+## API Overview (Protected by Firebase JWT)
+
+Base URL: `http://localhost:4000`
+
+- `GET /health` – Service health
+- `POST /api/violations` – Create violation
+- `GET /api/violations` – List violations created by current user
+- `POST /api/violations/:id/pay` – Mark as paid (server-side fallback)
+- `POST /api/drivers/register` – Create driver profile
+- `GET /api/drivers/profile` – Get current profile
+- `PATCH /api/drivers/profile` – Update profile
+- `GET /api/drivers/violations?status=pending|paid` – List assigned violations
+- `POST /api/payments/create-order` – Create Razorpay order
+- `POST /api/payments/verify` – Verify and mark violation paid
+
+Auth header required for `/api/*`:
+```
+Authorization: Bearer <Firebase ID Token>
+```
+
+## Production Deployment (Free-tier friendly)
+
+- Frontend: **Netlify** (static hosting)
+- Backend: **Render** Web Service (Node) – free tier sleeps on idle
+- Database: **MongoDB Atlas** (free tier)
+- Auth: **Firebase** – add your frontend domain to Authorized domains
+- Payments: **Razorpay** (test mode)
+
+### 1) Backend → Render
+- Connect GitHub repo → New Web Service
+- Root directory: `backend/`
+- Build command: `npm install`
+- Start command: `npm start`
+- Environment variables: add all vars listed above
+- Deploy → Test `https://<service>.onrender.com/health`
+
+### 2) Frontend → Netlify
+- New site from Git → Publish directory: `frontend`
+- Build command: none (static)
+- Site URL: `https://<yoursite>.netlify.app`
+- Update frontend `API_BASE` in `admin.js`, `driver.js`, and `app.js` to your Render URL
+- Commit & deploy
+
+### 3) Firebase & Razorpay
+- Firebase Console → Authentication → Authorized domains → add your Netlify domain
+- Razorpay (optional) → allow your frontend origin for Checkout; use test keys in env
+
+## Security & Notes
+
+- Do not commit secrets. Use environment variables in cloud hosts.
+- Prefer `FIREBASE_SERVICE_ACCOUNT_JSON` for Firebase Admin in production.
+- Consider restricting CORS in `backend/server.js` to your frontend domain.
+- For scale, store images in object storage (S3/GCS) and keep URLs in MongoDB instead of base64.
+
+## Troubleshooting
+
+- `Network Error` on API calls: ensure backend is reachable and URL matches `API_BASE`.
+- `401 Unauthorized`: check Firebase ID Token is sent and service account is correct.
+- Razorpay issues: ensure keys present and using Test mode; verify signature flow.
+
+## License
+
+MIT (or your preferred license)

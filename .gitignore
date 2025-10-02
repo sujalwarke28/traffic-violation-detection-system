@@ -1,0 +1,15 @@
+# Environment files
+.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# Firebase Admin credentials (never commit)
+backend/serviceAccountKey.json
+
+# Node modules
+**/node_modules/
+
+# OS/editor
+.DS_Store
+*.log

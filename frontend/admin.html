@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Traffic Violation Detector</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+  <script defer src="./firebase.js"></script>
+  <script defer src="./admin.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <meta name="color-scheme" content="light dark">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Admin · Traffic Violation Detector</div>
+    <div class="auth">
+      <button id="btnSignIn" class="btn primary">Sign in with Google</button>
+      <div id="userInfo" class="user-info hidden">
+        <img id="userAvatar" alt="avatar" />
+        <span id="userName"></span>
+        <button id="btnSignOut" class="btn">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>Upload</h2>
+      <div class="two-col">
+        <div class="stack">
+          <div class="label">Upload Violation Image:</div>
+          <div id="violationDrop" class="tile" tabindex="0">
+            <div class="hint">
+              Drag and drop or click to upload<br/>(preview below)
+            </div>
+          </div>
+          <img id="violationPreview" alt="preview" class="preview hidden" />
+          <input type="file" id="imageInput" accept="image/*" class="hidden" />
+        </div>
+        <div class="stack">
+          <div class="label">Upload Numberplate Image:</div>
+          <div id="idPlateDrop" class="tile" tabindex="0">
+            <div class="hint">
+              Drag and drop or click to upload<br/>(preview below)
+            </div>
+          </div>
+          <img id="idPlatePreview" alt="preview" class="preview hidden" />
+          <input type="file" id="idPlateImage" accept="image/*" class="hidden" />
+          <div class="actions">
+            <button id="btnReadIdPlate" class="btn">Number from Numberplate</button>
+            <button id="btnClearIdPlate" class="btn ghost">Clear</button>
+          </div>
+          <div>
+            <span class="label">Detected Plate ID:</span>
+            <span id="idPlateText" class="value">-</span>
+          </div>
+          <div class="status" id="idPlateStatus"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:14px">
+        <div>
+          <div class="label">Detected Plate</div>
+          <div id="plateText" class="value">-</div>
+        </div>
+        <div>
+          <div class="label">Rider Count</div>
+          <div id="riderCount" class="value">-</div>
+        </div>
+        <div>
+          <div class="label">Helmet Detected</div>
+          <div id="helmetDetected" class="value">-</div>
+        </div>
+        <div>
+          <div class="label">Detected Violation</div>
+          <div id="violations" class="value">-</div>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:14px">
+        <button id="btnProcess" class="btn primary" disabled>Process Violation</button>
+        <button id="btnCancel" class="btn ghost">Cancel</button>
+        <button id="btnSave" class="btn" disabled>Save Result</button>
+      </div>
+
+      <div class="media hidden">
+        <video id="video" autoplay playsinline class="hidden"></video>
+        <canvas id="canvas"></canvas>
+        <canvas id="idPlateCanvas" class="hidden"></canvas>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Fetch Previous Violations</h2>
+      <div class="actions">
+        <button id="btnFetch" class="btn">Fetch</button>
+      </div>
+      <div id="status" class="status"></div>
+      <div id="violationsList" class="list"></div>
+    </section>
+  </main>
+
+  <footer class="footer">Admin console. Saving a violation assigns it to a registered driver by plate number automatically.</footer>
+</body>
+</html>
