@@ -16,9 +16,9 @@ A full-stack web application for detecting traffic violations using in-browser M
 
 - **Frontend**: HTML, CSS, JavaScript (vanilla), TensorFlow.js, Tesseract.js.
 - **Backend**: Node.js, Express.js, Mongoose.
-- **Database**: MongoDB Atlas.
+- **Database**: MongoDB Atlas and Compass.
 - **Auth**: Firebase (Google Sign‑In, Admin SDK for verification).
-- **Payments**: Razorpay (optional/demo).
+- **Payments**: Razorpay (demo).
 
 ## Repository Structure
 
@@ -56,58 +56,6 @@ docs/               # Architecture and planning
 - **Client Firebase config is OK**
   - Firebase web config in `frontend/firebase.js` is public by design; keep rules secure on the server side.
 
-### .gitignore (recommended entries)
-
-Ensure your repo ignores local secrets and artifacts:
-
-```
-# Environment files
-.env
-.env.*
-
-# Firebase Admin credentials (never commit)
-backend/serviceAccountKey.json
-
-# Node modules
-**/node_modules/
-
-# OS and editor files
-.DS_Store
-*.log
-```
-
-### .env.example (safe template to include in repo)
-
-Create `backend/.env.example` (no real values) to document required vars:
-
-```
-# Backend environment example (do not put real secrets here)
-PORT=4000
-MONGODB_URI=YOUR_ATLAS_URI
-MONGODB_DB=trafficdb
-RAZORPAY_KEY_ID=YOUR_RAZORPAY_TEST_KEY_ID
-RAZORPAY_KEY_SECRET=YOUR_RAZORPAY_TEST_KEY_SECRET
-
-# Paste full JSON of Firebase service account here in cloud hosts only
-FIREBASE_SERVICE_ACCOUNT_JSON={}
-```
-
-## Environment Variables (Backend)
-
-Set these on your local machine and on your cloud host.
-
-- `PORT` (optional, default 4000)
-- `MONGODB_URI` (required) – MongoDB Atlas connection string
-- `MONGODB_DB` (optional, default `trafficdb`)
-- `RAZORPAY_KEY_ID` (optional for payment demo)
-- `RAZORPAY_KEY_SECRET` (optional for payment demo)
-- `FIREBASE_SERVICE_ACCOUNT_JSON` (recommended in cloud) – the full JSON content of your Firebase service account
-
-Notes:
-- Locally, the backend can read `backend/serviceAccountKey.json`. In production, prefer `FIREBASE_SERVICE_ACCOUNT_JSON`.
-- Never commit secrets.
-
-If any secrets were previously committed, treat them as compromised and rotate immediately.
 
 ## Local Development
 
@@ -182,12 +130,6 @@ Authorization: Bearer <Firebase ID Token>
 - Firebase Console → Authentication → Authorized domains → add your Netlify domain
 - Razorpay (optional) → allow your frontend origin for Checkout; use test keys in env
 
-## Security & Notes
-
-- Do not commit secrets. Use environment variables in cloud hosts.
-- Prefer `FIREBASE_SERVICE_ACCOUNT_JSON` for Firebase Admin in production.
-- Consider restricting CORS in `backend/server.js` to your frontend domain.
-- For scale, store images in object storage (S3/GCS) and keep URLs in MongoDB instead of base64.
 
 ## Troubleshooting
 
@@ -195,6 +137,3 @@ Authorization: Bearer <Firebase ID Token>
 - `401 Unauthorized`: check Firebase ID Token is sent and service account is correct.
 - Razorpay issues: ensure keys present and using Test mode; verify signature flow.
 
-## License
-
-MIT (or your preferred license)
