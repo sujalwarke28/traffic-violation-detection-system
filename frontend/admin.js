@@ -40,7 +40,7 @@ let cocoModel = null;
 let processed = null;
 let idPlateOverride = null; // when set, overrides detected plate when saving
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = (typeof window !== 'undefined' && window.API_BASE) ? window.API_BASE : 'http://localhost:4000';
 
 function setStatus(text){ statusEl.textContent = text; }
 

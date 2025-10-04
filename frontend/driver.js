@@ -35,7 +35,7 @@ const btnRefreshHome = document.getElementById('btnRefreshHome');
 
 const plateCanvas = document.createElement('canvas');
 const ctx = plateCanvas.getContext('2d');
-const API_BASE = 'http://localhost:4000';
+const API_BASE = (typeof window !== 'undefined' && window.API_BASE) ? window.API_BASE : 'http://localhost:4000';
 
 function setStatus(t){ dStatus.textContent = t; }
 
