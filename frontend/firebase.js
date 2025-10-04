@@ -14,7 +14,24 @@ const auth = firebase.auth();
 
 async function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  await auth.signInWithPopup(provider);
+  try {
+    // Try popup first
+    await auth.signInWithPopup(provider);
+  } catch (e) {
+    // Common cases: popup blocked, unsupported environment on mobile browsers
+    const fallbackErrs = [
+      'auth/popup-blocked',
+      'auth/popup-closed-by-user',
+      'auth/cancelled-popup-request',
+      'auth/operation-not-supported-in-this-environment',
+    ];
+    if (fallbackErrs.some(code => String(e?.code||'').includes(code))) {
+      // Fallback to redirect flow
+      await auth.signInWithRedirect(provider);
+      return;
+    }
+    throw e;
+  }
 }
 
 async function signOut() {
