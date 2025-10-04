@@ -6,13 +6,31 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Initialize Firebase Admin with env vars or service account json path
+// Initialize Firebase Admin, preferring FIREBASE_SERVICE_ACCOUNT_JSON env
 if (!admin.apps.length) {
   try {
-    // Try to load service account key directly
-    const serviceAccountPath = join(__dirname, '../../serviceAccountKey.json');
-    console.log('Loading Firebase service account from:', serviceAccountPath);
-    const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
+    let serviceAccount = null;
+    const inline = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (inline) {
+      console.log('Initializing Firebase Admin from FIREBASE_SERVICE_ACCOUNT_JSON env');
+      const raw = JSON.parse(inline);
+      // Ensure private_key has real newlines, not literal \n
+      if (raw.private_key && typeof raw.private_key === 'string') {
+        raw.private_key = raw.private_key.replace(/\\n/g, '\n');
+      }
+      serviceAccount = raw;
+    } else {
+      // Fallback to local file for dev
+      const serviceAccountPath = join(__dirname, '../../serviceAccountKey.json');
+      console.log('Loading Firebase service account from:', serviceAccountPath);
+      const rawFile = readFileSync(serviceAccountPath, 'utf8');
+      const parsed = JSON.parse(rawFile);
+      if (parsed.private_key && typeof parsed.private_key === 'string') {
+        parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
+      }
+      serviceAccount = parsed;
+    }
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
