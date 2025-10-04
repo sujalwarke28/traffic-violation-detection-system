@@ -205,6 +205,34 @@ async function runOCR(image){
   return (text || '').replace(/\s+/g,' ').trim();
 }
 
+// Extract a plausible license plate from noisy OCR text
+// Strategy:
+// - Uppercase and strip non A-Z0-9
+// - Prefer candidates length 6-12 with a mix of letters and digits
+// - Fallback to the longest alphanumeric run if nothing matches
+function extractPlate(raw){
+  const s = String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(!s) return '';
+  // Generate all runs of A-Z0-9 with length between 6 and 12
+  const runs = s.match(/[A-Z0-9]{6,12}/g) || [];
+  const scored = runs.map(r=>{
+    const hasL = /[A-Z]/.test(r);
+    const hasD = /[0-9]/.test(r);
+    // Score: prefer having both letters and digits, and closer to length 10
+    const len = r.length;
+    const balance = Math.abs(10 - len);
+    const score = (hasL && hasD ? 100 : 0) - balance; // higher is better
+    return { r, score };
+  }).sort((a,b)=> b.score - a.score || b.r.length - a.r.length);
+  if(scored.length) return scored[0].r;
+  // Fallback to the longest run of A-Z0-9
+  let best = '';
+  for(const m of (s.match(/[A-Z0-9]+/g) || [])){
+    if(m.length > best.length) best = m;
+  }
+  return best;
+}
+
 function detectHelmet(personBoxes, predictions){
   if(personBoxes.length === 0) return null;
   const motos = predictions.filter(p=>p.class==='motorcycle' && p.score>0.5);
@@ -294,7 +322,8 @@ btnProcess.addEventListener('click', async ()=>{
     const riderCount = estimateRiderCount(predictions);
     const helmetDetected = detectHelmet(predictions.filter(p=>p.class==='person'), predictions);
     const plate = await runOCR(image);
-    const plateClean = (plate || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    // Extract a plausible plate string from OCR noise
+    const plateClean = extractPlate(plate);
 
     const violationTypes = [];
     if(helmetDetected === false) violationTypes.push('NO_HELMET');

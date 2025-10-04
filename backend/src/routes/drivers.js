@@ -105,15 +105,13 @@ router.get('/violations', async (req, res) => {
     
     // Import Violation model
     const Violation = (await import('../models/Violation.js')).default;
-    const filter = { $or: [ { ownerUserId: driver.userId }, { plateText: driver.plateNumber } ] };
+    // Match either by explicit assignment (ownerUserId) or by normalized plate match
+    const driverPlateNorm = normalizePlate(driver.plateNumber);
+    const filter = { $or: [ { ownerUserId: driver.userId }, { normalizedPlateText: driverPlateNorm } ] };
     const status = String(req.query.status || '').toLowerCase();
     if(status === 'pending'){
-      filter.$or = [
-        { ...filter },
-      ]; // anchor to keep owner/plate match
       // Add paymentStatus inclusion for legacy docs (no field)
-      delete filter.$or; // reset, rebuild properly below
-      const baseMatch = { $or: [ { ownerUserId: driver.userId }, { plateText: driver.plateNumber } ] };
+      const baseMatch = { $or: [ { ownerUserId: driver.userId }, { normalizedPlateText: driverPlateNorm } ] };
       Object.assign(filter, baseMatch);
       filter.$and = [ { $or: [ { paymentStatus: 'pending' }, { paymentStatus: { $exists: false } } ] } ];
     } else if(status === 'paid'){
