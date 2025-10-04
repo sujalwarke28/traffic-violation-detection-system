@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Traffic Violation Detector</title>
+  <!-- Redirect homepage to landing.html -->
+  <meta http-equiv="refresh" content="0; url=./landing.html">
+  <script>
+    // JS redirect as a fallback (meta runs first)
+    window.location.replace('./landing.html');
+  </script>
   <link rel="stylesheet" href="./styles.css" />
   <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
