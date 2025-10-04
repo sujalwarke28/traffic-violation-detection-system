@@ -121,7 +121,8 @@ btnReadIdPlate?.addEventListener('click', async ()=>{
     if(!idPlateCanvas?.width || !idPlateCanvas?.height){ return alert('Upload an identity plate image first'); }
     setIdStatus('Reading plate number…');
     const { data: { text } } = await Tesseract.recognize(idPlateCanvas, 'eng', { tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-' });
-    const plate = (text || '').replace(/\s+/g,'').toUpperCase();
+    const raw = (text || '').replace(/\s+/g,' ').toUpperCase();
+    const plate = extractPlate(raw);
     idPlateOverride = plate || null;
     idPlateTextEl.textContent = plate || '-';
     setIdStatus(plate ? `Detected: ${plate}` : 'Could not read plate');
@@ -213,24 +214,35 @@ async function runOCR(image){
 function extractPlate(raw){
   const s = String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(!s) return '';
-  // Generate all runs of A-Z0-9 with length between 6 and 12
+  const candidates = [];
+  // 1) Strongly prefer Indian format: AA00A0 0000 or AA00AA0000 (2L 2D 1-2L 4D)
+  const indiaPattern = /[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}/g;
+  const exactIndiaMatches = s.match(indiaPattern) || [];
+  exactIndiaMatches.forEach(m=> candidates.push({r:m, score:1000}));
+
+  // 2) Next prefer any mixed alnum run length 6-12 that contains both letters and digits
   const runs = s.match(/[A-Z0-9]{6,12}/g) || [];
-  const scored = runs.map(r=>{
+  runs.forEach(r=>{
     const hasL = /[A-Z]/.test(r);
     const hasD = /[0-9]/.test(r);
-    // Score: prefer having both letters and digits, and closer to length 10
+    if(!(hasL && hasD)) return;
     const len = r.length;
-    const balance = Math.abs(10 - len);
-    const score = (hasL && hasD ? 100 : 0) - balance; // higher is better
-    return { r, score };
-  }).sort((a,b)=> b.score - a.score || b.r.length - a.r.length);
-  if(scored.length) return scored[0].r;
-  // Fallback to the longest run of A-Z0-9
-  let best = '';
-  for(const m of (s.match(/[A-Z0-9]+/g) || [])){
-    if(m.length > best.length) best = m;
+    const balance = Math.abs(10 - len); // closer to 10 often plate-like
+    const score = 200 - balance; // lower than strict India match
+    candidates.push({ r, score });
+  });
+
+  // 3) If nothing else, fallback to the longest alnum run 6-12
+  if(candidates.length===0){
+    let best = '';
+    for(const m of (s.match(/[A-Z0-9]+/g) || [])){
+      if(m.length >= 6 && m.length <= 12 && m.length > best.length) best = m;
+    }
+    if(best) return best;
   }
-  return best;
+
+  candidates.sort((a,b)=> b.score - a.score || b.r.length - a.r.length);
+  return candidates[0]?.r || '';
 }
 
 function detectHelmet(personBoxes, predictions){
